@@ -8,6 +8,7 @@ import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
 import com.sun.xml.internal.rngom.digested.DAnnotation;
+import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
@@ -17,15 +18,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Configuration
 public class GeolocationService {
     private static DatabaseReader reader = null;
     private GeolocationRepository geolocationRepository;
+    private static Map<Geolocation, Long> timeMap = new ConcurrentHashMap<Geolocation, Long>();
     //private static Set<String> ipIndex = new HashSet<String>();
     public GeolocationService(){
         File database = new File("your-path-to-db-file");
@@ -41,8 +42,23 @@ public class GeolocationService {
         return ipIndex.contains(ip);
 
     }
+    public Geolocation getLocation(String ip){
+        cleanMap();
+        Geolocation geolocation = timeMap.keySet().stream()
+                .filter(g->g.getIpAddress()==ip).findAny()
+                .orElse(geolocationRepository.findAll().stream()
+                .filter(g->g.getIpAddress()==ip).findAny().get());
+        return geolocation;
 
-    public Geolocation getLocation(String ip) throws IOException, GeoIp2Exception{
+
+
+
+
+
+    }
+
+    public Geolocation createLocation(String ip) throws IOException, GeoIp2Exception{
+
         if(checkIpAddress(ip)){
             return null;
         }
@@ -54,7 +70,17 @@ public class GeolocationService {
         String latitute = response.getLocation().getLatitude().toString();
         String longitute = response.getLocation().getLongitude().toString();
         Geolocation g=new Geolocation(ip,cityName,latitute,longitute);
+        timeMap.put(g,new Date().getTime());
         return geolocationRepository.save(g);
+    }
+
+    private void cleanMap(){
+        long curr = new Date().getTime();
+        for(Geolocation k:timeMap.keySet()){
+            if(curr>(timeMap.get(k)+60000)){
+                timeMap.remove(k);
+            }
+        }
     }
     /*
     private final ResourceLoader resourceLoader;

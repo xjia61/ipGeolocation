@@ -25,8 +25,15 @@ public class GeolocationController {
     @PostMapping("/geolocations")
     public Geolocation createGeolocation(@RequestBody String ip) throws Exception{
 
-        return geolocationService.getLocation(ip);
+        return geolocationService.createLocation(ip);
 
+    }
+
+    @GetMapping("/geolocations/{ip}")
+    public ResponseEntity<Geolocation> getGeolocationbyIp(@PathVariable String ip){
+        Geolocation geolocation = geolocationService.getLocation(ip);
+                //.orElseThrow(()->new Exception("ip location not exist with id: " + ip));
+        return ResponseEntity.ok(geolocation);
     }
 
 }
