@@ -37,7 +37,7 @@ public class GeolocationService {
     }
     public Boolean checkIpAddress(String ip){
         Set<String> ipIndex = geolocationRepository.findAll().stream()
-                .map(Geolocation::getIpAddress)
+                .map(Geolocation::getQuery)
                 .collect(Collectors.toSet());
         return ipIndex.contains(ip);
 
@@ -45,9 +45,9 @@ public class GeolocationService {
     public Geolocation getLocation(String ip){
         cleanMap();
         Geolocation geolocation = timeMap.keySet().stream()
-                .filter(g->g.getIpAddress()==ip).findAny()
+                .filter(g->g.getQuery()==ip).findAny()
                 .orElse(geolocationRepository.findAll().stream()
-                .filter(g->g.getIpAddress()==ip).findAny().get());
+                .filter(g->g.getQuery()==ip).findAny().get());
         return geolocation;
 
 
@@ -69,7 +69,7 @@ public class GeolocationService {
         String cityName = response.getCity().getName();
         String latitute = response.getLocation().getLatitude().toString();
         String longitute = response.getLocation().getLongitude().toString();
-        Geolocation g=new Geolocation(ip,cityName,latitute,longitute);
+        Geolocation g=new Geolocation();
         timeMap.put(g,new Date().getTime());
         return geolocationRepository.save(g);
     }

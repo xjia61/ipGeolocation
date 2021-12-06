@@ -6,6 +6,7 @@ import com.IP_geolocation.IP_geolocation.services.GeolocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
@@ -16,6 +17,10 @@ public class GeolocationController {
     @Autowired
     //private GeolocationRepository geolocationRepository;
     private GeolocationService geolocationService;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
 
     @GetMapping("/geolocations")
     public List<Geolocation> getallGeolocations(){
@@ -31,9 +36,14 @@ public class GeolocationController {
 
     @GetMapping("/geolocations/{ip}")
     public ResponseEntity<Geolocation> getGeolocationbyIp(@PathVariable String ip){
-        Geolocation geolocation = geolocationService.getLocation(ip);
+        //Geolocation geolocation = geolocationService.getLocation(ip);
                 //.orElseThrow(()->new Exception("ip location not exist with id: " + ip));
-        return ResponseEntity.ok(geolocation);
+        //return ResponseEntity.ok(geolocation);
+        String url = "http://ip-api.com/json/"+ip+"?fields=61439";
+
+        Geolocation g = restTemplate.getForObject(url, Geolocation.class);
+        return ResponseEntity.ok(g);
+
     }
 
 }
